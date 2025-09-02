@@ -1,0 +1,433 @@
+const ID_PlantillaConSalario = "REEMPLAZA POR ID HOJA DE CÁLCULO"
+const ID_PlantillaSinSalario = "REEMPLAZA POR ID HOJA DE CÁLCULO"
+const ID_Carpeta = "REEMPLAZA POR ID HOJA DE CÁLCULO"
+const ID_HojaParametros = "REEMPLAZA POR ID HOJA DE CÁLCULO"
+const libro = SpreadsheetApp.openById("REEMPLAZA POR ID HOJA DE CÁLCULO")
+const ID_FolderTemplate = "REEMPLAZA POR ID DE CARPETA TEMPORAL"
+var salIntegral = 0;
+function traerDatos()
+{
+  //Abro la hoja base
+
+  const sheet = libro.getSheetByName("Base");
+  var jo = {};
+  var dataArray = [];
+  var rows = sheet.getRange(2,1,sheet.getLastRow()-1, sheet.getLastColumn()).getValues();
+  var colum = sheet.getRange(1,1,1, sheet.getLastColumn()).getValues(); 
+  var idDoc = "";
+  for(var i = 0, l= rows.length; i<l ; i++)
+  {
+    var dataRow = rows[i];
+    var record = {};
+    for(var j=1, x=sheet.getLastColumn();j<=x;j++)
+    {
+        if(sheet.getRange(1,j).getValue()=== 'adjunto')
+        {
+            idDoc = dataRow[j-1].split("=")[1]; 
+            dataRow[j-1]= DriveApp.getFileById(idDoc).getUrl();
+            dataRow[j-1] = "https://"+dataRow[j-1].split("/")[2]+"/"+dataRow[j-1].split("/")[3]+"/d/"+idDoc+"/preview";
+            record[sheet.getRange(1,j).getValue()] = dataRow[j-1];
+        }
+        else
+        {
+            record[sheet.getRange(1,j).getValue()] = dataRow[j-1];
+        }
+        
+    }
+   dataArray.push(record);
+  }  
+  Logger.log(dataArray)
+  jo = dataArray;
+  var result = JSON.stringify(jo);// lo convierto a formato JSON
+  return result;
+
+}
+
+function buscaEmpleado(mail='lavila70@estudiantes.areandina.edu.co')
+{
+  var datosEmp = JSON.parse(traerDatos());
+  var info =0;
+  var infoEmp;
+  datosEmp.forEach(function(dato){
+
+    if(dato.Correo === mail)
+    { 
+      info=1;
+      infoEmp = 
+      {
+        'Correo':dato.Correo,
+        'Empleado':dato.Empleado,
+        'TipoDocumento':dato.TipoDocumento,
+        'NumeroDocumento':dato.NumeroDocumento,
+        'CiudadExpedicion':dato.CiudadExpedicion,
+        'Fecha_ingreso':dato.Fecha_ingreso,
+        'Cargo':dato.Cargo,
+        'Salario':dato.Salario,
+        'Empresa':dato.Empresa,
+        'Nit':dato.Nit,
+        'TipoContrato':dato.TipoContrato,
+        'Ciudad':dato.Ciudad
+      }
+    }
+  })
+
+  if(info===0)
+  {
+    return "Error";
+  }
+  else
+  {
+    return infoEmp;
+  }
+}
+
+function consecutivos()
+{
+
+  const hojaParametro = SpreadsheetApp.openById(ID_HojaParametros).getSheetByName("Backend");
+  salIntegral = hojaParametro.getRange("B8").getValue()+1;//valor de salario integral en variable global
+  var fechaActual = new Date();
+  var anio = fechaActual.getFullYear()-2000;//obtengo año actual
+  var charId ='';
+  for (var i = 1; i < 5 ; i++) 
+  { 
+     charId += String.fromCharCode(97 + Math.random()*10);
+  } 
+  var consecutivo="Prot-"+anio+hojaParametro.getRange("B4").getValue()+charId;//consecutivo ramdom maximo de 3
+  var incremento = hojaParametro.getRange("B4").getValue()+1;//incremento consecutivo actual
+  hojaParametro.getRange("B4").setValue(incremento)// incremento el consecutivo
+  console.log(consecutivo)
+  return consecutivo;//retorno consecutivo sin incremento
+}
+
+function parametrosAdministrados(e)
+{
+
+  const hojaParametro = SpreadsheetApp.openById(ID_HojaParametros).getSheetByName("Backend");
+  const generados = SpreadsheetApp.openById(ID_HojaParametros).getSheetByName("Generados");
+  var correoRRHH = hojaParametro.getRange("B5").getValue();//Correo de persona de RRHH
+  var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var email = e.response.getRespondentEmail();//obtengo Mail de persona que diligencio form.
+  var datosEmp = buscaEmpleado(email);
+  var emailEnvio =email+","+correoRRHH;//Concateno el de recursos humanos
+  // Alistamiento de variables con los valores buscados
+  var Fechaexpedicion = new Date(); 
+  Logger.log("datos emp "+datosEmp);
+  var errorHtml=HtmlService.createHtmlOutputFromFile("Rechazo").getContent();//Cuerpo de correo no exitoso
+  var dateExpe = Fechaexpedicion.getDate() +" de " + meses[Fechaexpedicion.getMonth()]+" del "+Fechaexpedicion.getFullYear();
+  if(datosEmp!="Error")
+  {
+      var	consecutivo = consecutivos()
+      var	Empleado = datosEmp['Empleado'];
+      var	TipoDocumento= datosEmp['TipoDocumento'];
+      var	NumeroDocumento= datosEmp['NumeroDocumento'];
+      var	CiudadExpedicion = datosEmp['CiudadExpedicion'];
+      var	fecha_ingreso= new Date(datosEmp['Fecha_ingreso']);//Convierto String a fecha
+      var	Cargo= datosEmp['Cargo'];
+      var auxSalario = datosEmp['Salario'];
+      var	Salario= datosEmp['Salario'].toLocaleString();//Formateo número 
+      var	TipoContrato= datosEmp['TipoContrato'];
+      var Empresa= datosEmp['Empresa'];
+      var Nit= datosEmp['Nit'];
+      var	Ciudad= datosEmp['Ciudad'];
+
+      var dia = fecha_ingreso.getDate();
+      var mes = meses[fecha_ingreso.getMonth()];
+      var anio = fecha_ingreso.getFullYear();
+      var numero_letras = NumeroALetras(auxSalario);
+      var DocPlantilla;
+
+      //valido si requiere certificado laboral con o sin salario.
+
+      const respuestaEnviada = e.response;
+      const respuestas = respuestaEnviada.getItemResponses();
+      var carpeta = DriveApp.getFolderById(ID_Carpeta);
+      //console.log("info respuesta 1 "+respuestas[1].getResponse())
+      if(respuestas[1].getResponse()=="Si")
+      {
+          DocPlantilla = DriveApp.getFileById(ID_PlantillaConSalario)
+      }
+      else
+      {
+          DocPlantilla = DriveApp.getFileById(ID_PlantillaSinSalario)
+          Salario = "Certificación expedida sin valor de salario";
+      }
+      var copiaDoc = DocPlantilla.makeCopy();// esto es para no dañar la plantilla
+      var iDCopiaDOc = copiaDoc.getId();
+
+      //Con la copia generada, procedo a abrir el documento y cambiar las etiquetas.
+      var templateDoc = DocumentApp.openById(iDCopiaDOc);
+      var texto = templateDoc.getBody();
+      var verificar = ""
+      /*
+      Versión II inclusión de código QR
+      */
+      insertaQR(consecutivo,NumeroDocumento, texto);
+      
+      //Inicio a reemplazar las etiquetas nombradas en la plantilla.
+      texto.replaceText("{{nombre}}",Empleado);
+      texto.replaceText("{{tipodoc}}",TipoDocumento);
+      texto.replaceText("{{numerodoc}}",NumeroDocumento);
+      texto.replaceText("{{expedicion}}",CiudadExpedicion);
+      texto.replaceText("{{fechainicio}}",dia+" de " + mes +" del "+anio);
+      texto.replaceText("{{cargo}}",Cargo);
+      texto.replaceText("{{valornumero}}",Salario);
+      texto.replaceText("{{Empresa}}",Empresa);
+      texto.replaceText("{{Nit}}",Nit);
+      texto.replaceText("{{tipocontrato}}",TipoContrato);
+      texto.replaceText("{{ciudad}}",Ciudad);
+      texto.replaceText("{{valorletras}}",numero_letras);
+      texto.replaceText("{{Consecutivo}}",consecutivo);
+      texto.replaceText("{{destinatario}}",respuestas[0].getResponse());
+      texto.replaceText("{{fechaexp}}", dateExpe);
+      //mejora de versión II inclusión de integral dependiendo de los parametros
+      console.log("salarios "+datosEmp['Salario'] +" "+ salIntegral);
+      if(datosEmp['Salario'] > salIntegral )
+      {
+          texto.replaceText("{{SalInt}}", "integral ");
+      }
+      else
+      {
+          texto.replaceText("{{SalInt}}", "");
+      }
+      
+      templateDoc.saveAndClose();//guardo la información en plantilla copia
+      var blob = copiaDoc.getBlob(); // se crea el archivo PDF
+      blob.setName("Certificación laboral "+Empleado+" "+dateExpe);//creo pdf con el nombre
+      var pdf = carpeta.createFile(blob);//guardo el documento en la carpeta
+      var adjunto = "https://drive.google.com/open?id="+pdf.getId();
+      var textoHtml=HtmlService.createHtmlOutputFromFile("Mail").getContent();//envio mail exitoso
+      textoHtml=textoHtml.replace("{{primerNombre}}", Empleado.split(" ")[0])
+
+      GmailApp.sendEmail(emailEnvio, "Certificación laboral "+dateExpe,"Envio carta laboral",
+      {
+        htmlBody:textoHtml,
+        attachments:[pdf]
+      })
+      //carpeta.removeFile(pdf);//este codigo permite eliminar el pdf de Drive.
+      DriveApp.getFileById(templateDoc.getId()).setTrashed(true);// elimino plantilla temporal.
+      //DriveApp.getFileById(idSheet).setTrashed(true);// elimino sheet temporal
+      generados.appendRow([consecutivo,Fechaexpedicion,email,Empleado,TipoDocumento,NumeroDocumento,Salario,fecha_ingreso,TipoContrato,adjunto]);
+  }
+  else
+  {
+   
+      GmailApp.sendEmail(emailEnvio, "Error de envío - Certificación laboral "+dateExpe,"Error de envío - Certificación laboral",
+        {
+          htmlBody:errorHtml,
+        })
+  }
+
+
+  
+}
+function insertaQR(cons,NumDoc,doc)
+{
+    var textoReemplazo = '{{verifica}}'
+    var consecutivo= cons;
+    console.log('asi llega el numdoc y consecutivo '+NumDoc+' '+cons)
+    var NumeroDocumento = NumDoc;
+    var documento = doc;
+    //var urlQr = "https://chart.googleapis.com/chart?chs=120x120&cht=qr&chl=" //api de google para crear códigos qr
+    var urlQr = "https://quickchart.io/qr?ecLevel=L&text=" // Solución Bug.
+    var verificar = "https://docs.google.com/forms/d/e/1FAIpQLSd5IUTS8_5_3VmHtdAxGlkHV1__02j8qr1hA3gXxpWmOOGA0w/viewform?entry.1496019381="+consecutivo+"&entry.475537912="+NumeroDocumento; //Opción 1 Form google.
+
+    //Opción 2- WebApp Google.
+    verificar= encodeURIComponent(verificar);
+    console.log(urlQr+verificar);
+    var QR =  UrlFetchApp.fetch(urlQr+verificar);// Ejecuto Url para obtener la imagen.
+    /*var QR = UrlFetchApp.fetch('https://chart.googleapis.com/chart?', {
+    'method' : 'post',
+    'payload' : {
+      'cht': 'qr',
+      'chl': verificar,
+      'chs': '100x100'
+  }});//.getContent();*/
+    var imagenQr = QR.getBlob();
+    var next = documento.findText(textoReemplazo);
+    //if (!next) return;
+    var r = next.getElement();
+    r.asText().setText("");
+    r.getParent().asParagraph().insertInlineImage(0, imagenQr);
+}
+
+//********************** función para convertir numero a letras  *******************************************/
+
+function Unidades(num){
+
+    switch(num)
+    {
+        case 1: return "UN";
+        case 2: return "DOS";
+        case 3: return "TRES";
+        case 4: return "CUATRO";
+        case 5: return "CINCO";
+        case 6: return "SEIS";
+        case 7: return "SIETE";
+        case 8: return "OCHO";
+        case 9: return "NUEVE";
+    }
+
+    return "";
+}//Unidades()
+
+function Decenas(num){
+
+    decena = Math.floor(num/10);
+    unidad = num - (decena * 10);
+
+    switch(decena)
+    {
+        case 1:
+            switch(unidad)
+            {
+                case 0: return "DIEZ";
+                case 1: return "ONCE";
+                case 2: return "DOCE";
+                case 3: return "TRECE";
+                case 4: return "CATORCE";
+                case 5: return "QUINCE";
+                default: return "DIECI" + Unidades(unidad);
+            }
+        case 2:
+            switch(unidad)
+            {
+                case 0: return "VEINTE";
+                default: return "VEINTI" + Unidades(unidad);
+            }
+        case 3: return DecenasY("TREINTA", unidad);
+        case 4: return DecenasY("CUARENTA", unidad);
+        case 5: return DecenasY("CINCUENTA", unidad);
+        case 6: return DecenasY("SESENTA", unidad);
+        case 7: return DecenasY("SETENTA", unidad);
+        case 8: return DecenasY("OCHENTA", unidad);
+        case 9: return DecenasY("NOVENTA", unidad);
+        case 0: return Unidades(unidad);
+    }
+}//Unidades()
+
+function DecenasY(strSin, numUnidades) {
+    if (numUnidades > 0)
+    return strSin + " Y " + Unidades(numUnidades)
+
+    return strSin;
+}//DecenasY()
+
+function Centenas(num) {
+    centenas = Math.floor(num / 100);
+    decenas = num - (centenas * 100);
+
+    switch(centenas)
+    {
+        case 1:
+            if (decenas > 0)
+                return "CIENTO " + Decenas(decenas);
+            return "CIEN";
+        case 2: return "DOSCIENTOS " + Decenas(decenas);
+        case 3: return "TRESCIENTOS " + Decenas(decenas);
+        case 4: return "CUATROCIENTOS " + Decenas(decenas);
+        case 5: return "QUINIENTOS " + Decenas(decenas);
+        case 6: return "SEISCIENTOS " + Decenas(decenas);
+        case 7: return "SETECIENTOS " + Decenas(decenas);
+        case 8: return "OCHOCIENTOS " + Decenas(decenas);
+        case 9: return "NOVECIENTOS " + Decenas(decenas);
+    }
+
+    return Decenas(decenas);
+}//Centenas()
+
+function Seccion(num, divisor, strSingular, strPlural) {
+    cientos = Math.floor(num / divisor)
+    resto = num - (cientos * divisor)
+
+    letras = "";
+
+    if (cientos > 0)
+        if (cientos > 1)
+            letras = Centenas(cientos) + " " + strPlural;
+        else
+            letras = strSingular;
+
+    if (resto > 0)
+        letras += "";
+
+    return letras;
+}//Seccion()
+
+function Miles(num) {
+    divisor = 1000;
+    cientos = Math.floor(num / divisor)
+    resto = num - (cientos * divisor)
+
+    strMiles = Seccion(num, divisor, "MIL", "MIL");
+    strCentenas = Centenas(resto);
+
+    if(strMiles == "")
+        return strCentenas;
+
+    return strMiles + " " + strCentenas;
+}//Miles()
+
+function Millones(num) {
+    divisor = 1000000;
+    cientos = Math.floor(num / divisor)
+    resto = num - (cientos * divisor)
+    console.log(Math.floor(num % divisor))
+    if(Math.floor(num % divisor)>0)
+    {
+      strMillones = Seccion(num, divisor, "UN MILLON ", "MILLONES ");
+    }
+    else
+    {
+      strMillones = Seccion(num, divisor, "UN MILLON DE", "MILLONES DE");
+    }
+    //strMillones = Seccion(num, divisor, "UN MILLON ", "MILLONES ");
+    strMiles = Miles(resto);
+
+    if(strMillones == "")
+        return strMiles;
+
+    return strMillones + " " + strMiles;
+}//Millones()
+
+function NumeroALetras(num) {
+    var data = {
+        numero: num,
+        enteros: Math.floor(num),
+        centavos: (((Math.round(num * 100)) - (Math.floor(num) * 100))),
+        letrasCentavos: "",
+        letrasMonedaPlural: 'PESOS',//"PESOS", 'Dólares', 'Bolívares', 'etcs'
+        letrasMonedaSingular: 'PESO', //"PESO", 'Dólar', 'Bolivar', 'etc'
+
+        letrasMonedaCentavoPlural: "CENTAVOS",
+        letrasMonedaCentavoSingular: "CENTAVO"
+    };
+
+    if (data.centavos > 0) {
+        data.letrasCentavos = "CON " + (function (){
+            if (data.centavos == 1)
+                return Millones(data.centavos) + " " + data.letrasMonedaCentavoSingular;
+            else
+                return Millones(data.centavos) + " " + data.letrasMonedaCentavoPlural;
+            })();
+    };
+
+    if(data.enteros == 0)
+        return "CERO " + data.letrasMonedaPlural + " " + data.letrasCentavos;
+    if (data.enteros == 1)
+        return Millones(data.enteros) + " " + data.letrasMonedaSingular + " " + data.letrasCentavos;
+    else
+        return Millones(data.enteros) + " " + data.letrasMonedaPlural + " " + data.letrasCentavos;
+}//NumeroALetras()
+
+/*
+function permisos()
+{
+  DriveApp.getFilesById('algo');
+  SpreadsheetApp.getActive()
+  DocumentApp.getActiveDocument
+  FormApp
+  GmailApp
+  UrlFetchApp
+}
+*/
