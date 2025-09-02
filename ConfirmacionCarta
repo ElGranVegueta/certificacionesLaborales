@@ -1,0 +1,77 @@
+function almacenarNotificar(e) {
+  
+  var valida = false;
+  var archivo = SpreadsheetApp.openById('REEMPLAZA POR ID HOJA DE CÁLCULO');
+  var hoja = archivo.getSheetByName('Generados');
+  var hojaSave=archivo.getSheetByName('ConsultaConsecutivo');
+  const respuestaEnviada = e.response;
+  const respuestas = respuestaEnviada.getItemResponses();
+  var fecha = new Date();
+  fecha = formatearFechahora(fecha);
+  var Consecutivo = respuestas[4].getResponse() ;
+  var documento = respuestas[5].getResponse();
+  var emp = respuestas[0].getResponse();
+  var mail = respuestas[1].getResponse();
+  var observac = respuestas[2].getResponse();
+  var datos = hoja.getDataRange().getValues();//Obtengo los valores
+  datos.shift();//Quito el encabezado de los valores
+  datos.forEach(dato=>{
+
+      if(dato[0]==Consecutivo && documento==dato[5])
+      {
+          console.log(dato);
+          Consecutivo = dato[0];
+          Fecha_Expedicion= formatearFecha(dato[1]);
+          Correo= dato[2];
+          Nombre= dato[3];
+          Tipo_documento= dato[4];
+          Numero_documento= dato[5];
+          Salario= dato[6];
+          Fecha_Ingreso= formatearFecha(dato[7]);
+          Tipo_Contrato= dato[8];
+          valida = true;
+      }
+  });
+
+  if(valida)
+  {
+      var textoHtml=HtmlService.createHtmlOutputFromFile("Mail").getContent();//envio mail exitoso
+      textoHtml=textoHtml.replace("{{primerNombre}}", emp );
+      textoHtml=textoHtml.replace("{{nomEmpleado}}", Nombre );
+      textoHtml=textoHtml.replace("{{tipoDoc}}", Tipo_documento );
+      textoHtml=textoHtml.replace("{{numDoc}}", Numero_documento );
+      textoHtml=textoHtml.replace("{{fechIngreso}}", Fecha_Ingreso );
+      textoHtml=textoHtml.replace("{{tipoContrato}}", Tipo_Contrato );
+      textoHtml=textoHtml.replace("{{fechaExp}}", Fecha_Expedicion );
+      textoHtml=textoHtml.replace("{{consecutivo}}", Consecutivo );
+      textoHtml=textoHtml.replace("{{salario}}", Salario.toLocaleString() );
+      GmailApp.sendEmail(mail, "Confirmación carta laboral - "+Consecutivo,"Confirmación carta laboral",
+      {
+        htmlBody:textoHtml,
+      });
+      var fecha = new Date();
+      fecha = formatearFechahora(fecha);
+      hojaSave.appendRow([fecha,Consecutivo, emp, mail, observac,"Enviado"]);//guardo la información de consulta de consecutivos.
+  }
+  else
+  {
+      var textoHtml=HtmlService.createHtmlOutputFromFile("MailError").getContent();//envio mail No exitoso
+      textoHtml=textoHtml.replace("{{primerNombre}}", emp );
+      textoHtml=textoHtml.replace("{{consecutivo}}", Consecutivo );
+      GmailApp.sendEmail(mail, "Confirmación carta laboral - "+Consecutivo,"Confirmación carta laboral",
+      {
+        htmlBody:textoHtml,
+      });
+      hojaSave.appendRow([fecha,Consecutivo, emp, mail, observac,"Error"])
+  }
+
+}
+function formatearFechahora(fecha)
+{
+  return Utilities.formatDate(fecha,"GMT-5","dd-MM-yyyy hh:mm:ss");
+}
+function formatearFecha(fecha)
+{
+  return Utilities.formatDate(fecha,"GMT-5","dd-MM-yyyy");
+}
+
