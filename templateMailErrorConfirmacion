@@ -1,0 +1,15 @@
+<div dir="ltr">Buen d&iacute;a {{primerNombre}},&nbsp;
+<div>&nbsp;</div>
+<div>De acuerdo a su solicitud me permito confirmar datos de certificaci&oacute;n laboral {{consecutivo}}:<br><br>
+<table style="border-collapse: collapse; width: 100%;" border="1">
+<tbody>
+  <tr>
+  <td style="width: 100%;"><span style="color: #ff0000;"><strong>Los datos ingresados no son validos o certificaci&oacute;n no fue emitida por Mi Empresa.</strong></span></td>
+  </tr>
+</tbody>
+</table>
+</div>
+<div>&nbsp;</div>
+<div>Quedamos atentos a sus inquietudes.</div>
+
+
