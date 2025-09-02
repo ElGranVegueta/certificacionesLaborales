@@ -1,0 +1,41 @@
+<div dir="ltr">Buen d&iacute;a {{primerNombre}},&nbsp;
+<div>&nbsp;</div>
+<div>De acuerdo a su solicitud me permito confirmar datos de certificaci&oacute;n laboral {{consecutivo}}:<br><br><br></div>
+<div></div>
+<div>
+<table border="1" style="border-collapse: collapse; width: 60%; height: 108px;">
+<tbody>
+<tr style="height: 18px;">
+<td style="width: 45.6523%; height: 18px;">&nbsp;&nbsp;<strong>Nombre empleado:</strong></td>
+<td style="width: 55.3829%; height: 18px;">{{nomEmpleado}}</td>
+</tr>
+<tr style="height: 18px;">
+<td style="width: 45.6523%; height: 18px;">&nbsp;&nbsp;<strong>Tipo de documento:</strong></td>
+<td style="width: 55.3829%; height: 18px;">{{tipoDoc}}</td>
+</tr>
+<tr style="height: 18px;">
+<td style="width: 45.6523%; height: 18px;">&nbsp;&nbsp;<strong>N&uacute;mero de documento:</strong></td>
+<td style="width: 55.3829%; height: 18px;">{{numDoc}}</td>
+</tr>
+<tr style="height: 18px;">
+<td style="width: 45.6523%; height: 18px;">&nbsp;&nbsp;<strong>Fecha de ingreso:</strong></td>
+<td style="width: 55.3829%; height: 18px;">{{fechIngreso}}</td>
+</tr>
+<tr style="height: 18px;">
+<td style="width: 45.6523%; height: 18px;">&nbsp;&nbsp;<strong>Tipo de contrato:</strong></td>
+<td style="width: 55.3829%; height: 18px;">{{tipoContrato}}</td>
+</tr>
+<tr style="height: 18px;">
+<td style="width: 45.6523%; height: 18px;">&nbsp;&nbsp;<strong>Fecha expedici&oacute;n de carta:</strong></td>
+<td style="width: 55.3829%; height: 18px;">{{fechaExp}}</td>
+</tr>
+<tr>
+<td style="width: 45.6523%;">&nbsp;&nbsp;<strong>Salario:</strong></td>
+<td style="width: 55.3829%;">{{salario}}</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div>&nbsp;</div>
+<div>Quedamos atentos a sus inquietudes.</div>
+
